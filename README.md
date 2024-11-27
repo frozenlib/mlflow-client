@@ -1,7 +1,7 @@
 # mlflow-client
 
 [![Crates.io](https://img.shields.io/crates/v/mlflow-client.svg)](https://crates.io/crates/mlflow-client)
-[![Docs.rs](https://docs.rs/CRATE_NAME/badge.svg)](https://docs.rs/mlflow-client/)
+[![Docs.rs](https://docs.rs/mlflow-client/badge.svg)](https://docs.rs/mlflow-client/)
 [![Actions Status](https://github.com/frozenlib/mlflow-client/workflows/CI/badge.svg)](https://github.com/frozenlib/mlflow-client/actions)
 
 [MLflow](https://mlflow.org/) REST API client for Rust. (Unofficial)
