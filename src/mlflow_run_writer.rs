@@ -42,6 +42,18 @@ impl Data {
     }
 }
 
+/// Writer for outputting logs to [Run](https://mlflow.org/docs/latest/tracking.html#runs).
+///
+/// This differs from [`MlflowRun`] in the following ways:
+/// - Methods other than [`finish`](Self::finish) may output logs asynchronously for performance reasons.
+///   When output is asynchronous, any errors that occur will be returned in subsequent method calls.
+/// - If an instance is dropped without calling [`finish`](Self::finish), the Run's status will be set to Failed.
+/// - Log timestamps will be set to the time when the method is called
+///
+/// To obtain a `MlflowRunWriter`, use [`MlflowExperiment::start_run`] or [`MlflowExperiment::start_run_with`].
+///
+/// [`MlflowExperiment::start_run`]: crate::MlflowExperiment::start_run
+/// [`MlflowExperiment::start_run_with`]: crate::MlflowExperiment::start_run_with
 pub struct MlflowRunWriter {
     run: MlflowRun,
     is_end: bool,
@@ -65,9 +77,35 @@ impl MlflowRunWriter {
     pub fn run(&self) -> &MlflowRun {
         &self.run
     }
+
+    /// Logs a single parameter.
     pub fn log_param(&mut self, key: &str, value: &str) -> Result<()> {
         self.run.log_param(key, value)
     }
+
+    /// Logs multiple parameters.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let mlflow = mlflow_client::Mlflow::new("http://localhost:5000")?;
+    /// let experiment = mlflow.create_experiment_if_not_exists("experiment_name", Default::default())?;
+    /// let run = experiment.start_run("run_name")?;
+    ///
+    /// #[derive(serde::Serialize)]
+    /// struct HyperParams {
+    ///    param_a: f64,
+    ///    param_b: f64,
+    /// }
+    /// let params = HyperParams {
+    ///   param_a: 1.0,
+    ///   param_b: 2.0,
+    /// };
+    /// run.log_params("prefix", params)?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn log_params(&mut self, key: &str, values: impl Serialize) -> Result<()> {
         self.run.log_params(key, values)
     }

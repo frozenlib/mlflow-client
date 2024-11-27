@@ -5,6 +5,7 @@ use crate::data::{Metric, Param, Run, RunTag, Timestamp, UpdateRunOptions};
 use crate::utils::build_params;
 use crate::{MlflowRunWriter, Result};
 
+/// Represents a [Run](https://mlflow.org/docs/latest/tracking.html#runs).
 #[derive(Debug, Clone)]
 pub struct MlflowRun {
     client: MlflowClient,
@@ -20,32 +21,47 @@ impl MlflowRun {
     pub fn id(&self) -> &str {
         &self.data.info.run_id
     }
+
     pub fn name(&self) -> &str {
         &self.data.info.run_name
     }
+
     pub fn data(&self) -> &Run {
         &self.data
     }
 
+    /// Retrieves the information aboutthis Run from the server.
+    ///
+    /// Returns a new `MlflowRun` with the updated information.
+    /// The information in `self` is not modified.
     pub fn reload(&self) -> Result<Self> {
         Ok(MlflowRun::new(
             &self.client,
             self.client.get_run(self.id())?.run,
         ))
     }
+
+    /// Updates the information of this Run.
+    ///
+    /// The information in `self` is not modified.
+    /// Use [`reload`](Self::reload) to get the updated information.
     pub fn update(&self, options: UpdateRunOptions) -> Result<()> {
         self.client.update_run(self.id(), options)?;
         Ok(())
     }
 
+    /// Soft deletes this Run.
     pub fn delete(&self) -> Result<()> {
         self.client.delete_run(self.id())?;
         Ok(())
     }
+
+    /// Restores this soft-deleted Run.
     pub fn restore(&self) -> Result<()> {
         self.client.restore_run(self.id())?;
         Ok(())
     }
+
     pub fn set_tag(&self, key: &str, value: &str) -> Result<()> {
         self.client.set_tag(self.id(), key, value)?;
         Ok(())
@@ -55,10 +71,15 @@ impl MlflowRun {
         Ok(())
     }
 
+    /// Logs a single parameter.
     pub fn log_param(&self, key: &str, value: &str) -> Result<()> {
         self.client.log_param(self.id(), key, value)?;
         Ok(())
     }
+
+    /// Logs multiple parameters.
+    ///
+    /// See [`MlflowRunWriter::log_params`] for reference.
     pub fn log_params(&self, key: &str, values: impl Serialize) -> Result<()> {
         let values = serde_json::to_value(values)?;
         let mut params = Vec::new();
@@ -80,9 +101,10 @@ impl MlflowRun {
     pub fn log_metrics(
         &mut self,
         metrics: &[(impl AsRef<str>, f64)],
+        timestamp: impl Into<Timestamp>,
         step: Option<i64>,
     ) -> Result<()> {
-        let timestamp = Timestamp::now();
+        let timestamp = timestamp.into();
         let metrics = metrics
             .iter()
             .map(|(key, value)| Metric {
@@ -95,6 +117,10 @@ impl MlflowRun {
         self.log_batch(&metrics, &[], &[])
     }
 
+    /// Logs multiple entries.
+    ///
+    /// If the number of logs exceeds the limit that can be sent in a single request,
+    /// it will be split into multiple requests.
     pub fn log_batch(&self, metrics: &[Metric], params: &[Param], tags: &[RunTag]) -> Result<()> {
         let len_sum = metrics.len() + params.len() + tags.len();
         if len_sum == 0 {
@@ -132,6 +158,7 @@ impl MlflowRun {
         Ok(())
     }
 
+    /// Retrieves the entire history of metrics for the specified key.
     pub fn metric_history(&self, key: &str) -> Result<Vec<Metric>> {
         let mut results = Vec::new();
         let mut page_token = None;

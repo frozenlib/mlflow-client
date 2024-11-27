@@ -3,6 +3,7 @@ use crate::data::{CreateRunOptions, Experiment, SearchRunsOptions, Timestamp};
 use crate::utils::none_if_not_exist;
 use crate::{MlflowRun, MlflowRunWriter, Result};
 
+/// Represents a [Experiment](https://mlflow.org/docs/latest/tracking.html#experiments).
 #[derive(Debug, Clone)]
 pub struct MlflowExperiment {
     client: MlflowClient,
@@ -54,6 +55,8 @@ impl MlflowExperiment {
     pub fn runs(&self) -> Result<Vec<MlflowRun>> {
         self.runs_with(SearchRunsOptions::default())
     }
+
+    /// Get all runs in this experiment that match the specified search options.
     pub fn runs_with(&self, options: SearchRunsOptions) -> Result<Vec<MlflowRun>> {
         let mut results = Vec::new();
         let mut page_token = None;
@@ -74,18 +77,31 @@ impl MlflowExperiment {
         }
         Ok(results)
     }
+
+    /// Get a run by its ID.
     pub fn run(&self, id: &str) -> Result<Option<MlflowRun>> {
         none_if_not_exist(self.client.get_run(id), |r| {
             Ok(MlflowRun::new(&self.client, r.run))
         })
     }
+
+    /// Create a new Run.
+    ///
+    /// Use [`start_run`](Self::start_run) instead of `create_run` to log the currently running run.
+    /// [`MlflowRunWriter`] contains features suitable for logging the currently running run.
     pub fn create_run(&self, name: &str, options: CreateRunOptions) -> Result<MlflowRun> {
         let r = self.client.create_run(self.id(), name, options)?;
         Ok(MlflowRun::new(&self.client, r.run))
     }
+
+    /// Creates a Run with default settings and returns its [`MlflowRunWriter`].
     pub fn start_run(&self, name: &str) -> Result<MlflowRunWriter> {
         self.start_run_with(name, CreateRunOptions::default())
     }
+
+    /// Creates a Run with the specified options and returns its [`MlflowRunWriter`].
+    ///
+    /// `options.start_time` is set to the current time if not specified.
     pub fn start_run_with(
         &self,
         name: &str,

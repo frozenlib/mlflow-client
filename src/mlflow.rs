@@ -3,20 +3,26 @@ use crate::data::{CreateExperimentOptions, SearchExperimentsOptions};
 use crate::utils::none_if_not_exist;
 use crate::{MlflowExperiment, Result};
 
+/// Represents the [MLflow Tracking Server] to which requests are sent.
+///
+/// [MLflow Tracking Server]: https://mlflow.org/docs/latest/tracking/server.html
 #[derive(Debug, Clone, Default)]
 pub struct Mlflow {
     client: MlflowClient,
 }
 impl Mlflow {
-    /// Create a new `Mlflow` instance.
+    /// Creates a new `Mlflow` with the specified [MLflow Tracking Server] URI.
     ///
     /// # Examples
     ///
     /// ```
-    /// use mlflow_client::Mlflow;
-    ///
-    /// let _mlflow = Mlflow::new("http://localhost:5000").unwrap();
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let _mlflow = mlflow_client::Mlflow::new("http://localhost:5000")?;
+    /// # Ok(())
+    /// # }
     /// ```
+    ///
+    /// [MLflow Tracking Server]: https://mlflow.org/docs/latest/tracking/server.html
     pub fn new(uri: &str) -> Result<Mlflow> {
         Ok(Mlflow {
             client: MlflowClient::new(uri)?,
@@ -27,6 +33,8 @@ impl Mlflow {
     pub fn experiments(&self) -> Result<Vec<MlflowExperiment>> {
         self.experiments_with(SearchExperimentsOptions::default())
     }
+
+    /// Get all experiments that match the specified search options.
     pub fn experiments_with(
         &self,
         options: SearchExperimentsOptions,
@@ -49,17 +57,22 @@ impl Mlflow {
         }
         Ok(results)
     }
+
+    /// Get an experiment by its ID.
     pub fn experiment(&self, id: &str) -> Result<Option<MlflowExperiment>> {
         none_if_not_exist(self.client.get_experiment(id), |r| {
             Ok(MlflowExperiment::new(&self.client, r.experiment))
         })
     }
+
+    /// Get an experiment by its name.
     pub fn experiment_by_name(&self, name: &str) -> Result<Option<MlflowExperiment>> {
         none_if_not_exist(self.client.get_experiment_by_name(name), |r| {
             Ok(MlflowExperiment::new(&self.client, r.experiment))
         })
     }
 
+    /// Create a new experiment.
     pub fn create_experiment(
         &self,
         name: &str,
@@ -70,6 +83,7 @@ impl Mlflow {
         Ok(MlflowExperiment::new(&self.client, r.experiment))
     }
 
+    /// Create a new experiment if it does not exist, otherwise return the existing experiment.
     pub fn create_experiment_if_not_exists(
         &self,
         name: &str,
