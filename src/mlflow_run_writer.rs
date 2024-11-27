@@ -91,7 +91,7 @@ impl MlflowRunWriter {
     /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// let mlflow = mlflow_client::Mlflow::new("http://localhost:5000")?;
     /// let experiment = mlflow.create_experiment_if_not_exists("experiment_name", Default::default())?;
-    /// let run = experiment.start_run("run_name")?;
+    /// let mut run = experiment.start_run("run_name")?;
     ///
     /// #[derive(serde::Serialize)]
     /// struct HyperParams {
