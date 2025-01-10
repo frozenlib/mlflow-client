@@ -86,6 +86,7 @@ fn lock() -> (u32, File) {
 }
 
 impl Drop for MlflowServer {
+    #[allow(unstable_name_collisions)]
     fn drop(&mut self) {
         self.child.stdin.take();
         self.child.wait().unwrap();
