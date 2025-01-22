@@ -321,7 +321,7 @@ fn log_batch() -> Result<()> {
     let c = s.mlflow_client();
     let r0 = c.create_experiment("abc", Default::default())?;
     let r1 = c.create_run(&r0.experiment_id, "", Default::default())?;
-    let metrics = vec![
+    let mut metrics = vec![
         Metric {
             key: "m1".to_string(),
             value: 1.0,
@@ -357,6 +357,8 @@ fn log_batch() -> Result<()> {
     ];
     c.log_batch(&r1.run.info.run_id, &metrics, &params, &tags)?;
     let mut r2 = c.get_run(&r1.run.info.run_id)?;
+    r2.run.data.params.sort();
+    metrics.sort();
     assert_eq!(&r2.run.data.metrics, &metrics);
     r2.run.data.params.sort();
     params.sort();
