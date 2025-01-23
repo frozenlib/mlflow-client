@@ -357,7 +357,7 @@ fn log_batch() -> Result<()> {
     ];
     c.log_batch(&r1.run.info.run_id, &metrics, &params, &tags)?;
     let mut r2 = c.get_run(&r1.run.info.run_id)?;
-    r2.run.data.params.sort();
+    r2.run.data.metrics.sort();
     metrics.sort();
     assert_eq!(&r2.run.data.metrics, &metrics);
     r2.run.data.params.sort();
